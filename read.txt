@@ -1,0 +1,53 @@
+from sqlalchemy import create_engine, Column, Integer, String, Numeric, Boolean, ForeignKey
+from sqlalchemy.orm import sessionmaker, relationship, declarative_base
+
+# Задача 1: Создайте экземпляр движка для подключения к SQLite базе данных в памяти.
+# Создаем экземпляр движка, который подключается к SQLite базе данных, находящейся в памяти.
+# 'sqlite:///:memory:' означает, что база данных создается в оперативной памяти.
+# Параметр echo=True выводит все SQL-запросы в консоль для отладки.
+engine = create_engine('sqlite:///:memory:', echo=True)
+
+# Задача 2: Создайте сессию для взаимодействия с базой данных, используя созданный движок.
+# Создаем фабрику сессий, связывая её с созданным движком базы данных.
+Session = sessionmaker(bind=engine)
+
+# Создаем экземпляр сессии, который будет использоваться для взаимодействия с базой данных.
+session = Session()
+
+# Задача 3: Определите модель продукта Product.
+# Создаем базовый класс для всех моделей, используя declarative_base.
+Base = declarative_base()
+
+# Определяем модель Product, которая будет представлять таблицу 'products' в базе данных.
+class Product(Base):
+    __tablename__ = 'products'  # Устанавливаем имя таблицы в базе данных.
+
+    # Определяем колонки таблицы:
+    id = Column(Integer, primary_key=True)  # Колонка 'id', целое число, первичный ключ.
+    name = Column(String(100), nullable=False)  # Колонка 'name', строка (макс. 100 символов), обязательно для заполнения.
+    price = Column(Numeric(10, 2), nullable=False)  # Колонка 'price', числовое значение с фиксированной точностью (10 разрядов, 2 после запятой).
+    in_stock = Column(Boolean, default=True)  # Колонка 'in_stock', логическое значение, по умолчанию True (в наличии).
+
+    # Задача 5: Установите связь между таблицами Product и Category.
+    category_id = Column(Integer, ForeignKey('categories.id'))  # Колонка 'category_id', целое число, внешний ключ, ссылающийся на таблицу 'categories'.
+
+    # Определяем отношение "многие к одному" с таблицей Category.
+    # Позволяет получить доступ к категории продукта через атрибут 'category'.
+    category = relationship("Category", back_populates="products")
+
+# Задача 4: Определите связанную модель категории Category.
+# Определяем модель Category, которая будет представлять таблицу 'categories' в базе данных.
+class Category(Base):
+    __tablename__ = 'categories'  # Устанавливаем имя таблицы в базе данных.
+
+    # Определяем колонки таблицы:
+    id = Column(Integer, primary_key=True)  # Колонка 'id', целое число, первичный ключ.
+    name = Column(String(100), nullable=False)  # Колонка 'name', строка (макс. 100 символов), обязательно для заполнения.
+    description = Column(String(255), nullable=True)  # Колонка 'description', строка (макс. 255 символов), необязательно для заполнения.
+
+    # Определяем отношение "один ко многим" с таблицей Product.
+    # Позволяет получить доступ ко всем продуктам, связанным с данной категорией, через атрибут 'products'.
+    products = relationship("Product", back_populates="category")
+
+# Создаем все таблицы в базе данных, определенные в моделях (Product и Category).
+Base.metadata.create_all(engine)
