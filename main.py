@@ -1,39 +1,31 @@
-from sqlalchemy import create_engine, Column, Integer, String, Numeric, Boolean, ForeignKey
-from sqlalchemy.orm import sessionmaker, relationship, declarative_base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from app.models import Base, Product, Category  # Импорт моделей из папки app
+from app.config import DATABASE_URI  # Импорт конфигурации из папки app
 
-# Задача 1: Создайте экземпляр движка для подключения к SQLite базе данных в памяти.
-engine = create_engine('sqlite:///:memory:', echo=True)
+# Остальной код остается без изменений...
 
-# Задача 2: Создайте сессию для взаимодействия с базой данных, используя созданный движок.
+
+# Создаем движок для подключения к базе данных
+engine = create_engine(DATABASE_URI, echo=True)
+
+# Создаем все таблицы в базе данных (если их нет)
+Base.metadata.create_all(engine)
+
+# Создаем сессию для работы с базой данных
 Session = sessionmaker(bind=engine)
 session = Session()
 
-# Задача 3: Определите модель продукта Product.
-Base = declarative_base()
+# Пример добавления данных в базу
+new_category = Category(name='Electronics', description='Electronic items')
+new_product = Product(name='Laptop', price=1500, in_stock=True, category=new_category)
 
+# Добавляем объекты в сессию
+session.add(new_category)
+session.add(new_product)
 
-class Product(Base):
-    __tablename__ = 'products'
+# Сохраняем изменения в базе данных
+session.commit()
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String(100), nullable=False)
-    price = Column(Numeric(10, 2), nullable=False)
-    in_stock = Column(Boolean, default=True)
-
-    # Задача 5: Установите связь между таблицами Product и Category.
-    category_id = Column(Integer, ForeignKey('categories.id'))
-    category = relationship("Category", back_populates="products")
-
-
-# Задача 4: Определите связанную модель категории Category.
-class Category(Base):
-    __tablename__ = 'categories'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String(100), nullable=False)
-    description = Column(String(255), nullable=True)
-
-    products = relationship("Product", back_populates="category")
-
-
-Base.metadata.create_all(engine)
+# Выводим результаты
+print(f"Added category: {new_category.name}, product: {new_product.name}")
