@@ -1,31 +1,27 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from app.models import Base, Product, Category  # Импорт моделей из папки app
-from app.config import DATABASE_URI  # Импорт конфигурации из папки app
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from app.config import DATABASE_URI  # Импорт конфигурации базы данных
+from app.routers.questions import questions_bp  # Импорт маршрутов (Blueprints)
 
-# Остальной код остается без изменений...
+app = Flask(__name__)
+
+# Настройки базы данных
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Инициализация базы данных и миграций
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+# Импорт моделей после инициализации базы данных
+from app.models import *
+
+# Импорт и регистрация маршрутов (Blueprints)
+app.register_blueprint(questions_bp)
+
+# Запуск приложения
+if __name__ == "__main__":
+    app.run(debug=True)
 
 
-# Создаем движок для подключения к базе данных
-engine = create_engine(DATABASE_URI, echo=True)
-
-# Создаем все таблицы в базе данных (если их нет)
-Base.metadata.create_all(engine)
-
-# Создаем сессию для работы с базой данных
-Session = sessionmaker(bind=engine)
-session = Session()
-
-# Пример добавления данных в базу
-new_category = Category(name='Electronics', description='Electronic items')
-new_product = Product(name='Laptop', price=1500, in_stock=True, category=new_category)
-
-# Добавляем объекты в сессию
-session.add(new_category)
-session.add(new_product)
-
-# Сохраняем изменения в базе данных
-session.commit()
-
-# Выводим результаты
-print(f"Added category: {new_category.name}, product: {new_product.name}")

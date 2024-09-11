@@ -1,7 +1,7 @@
-import sqlite3
+from sqlite3 import connect
 
 # Подключаемся к базе данных
-conn = sqlite3.connect('instance/mydatabase.db')
+conn = connect('instance/mydatabase.db')
 
 # Создаем курсор
 cursor = conn.cursor()
